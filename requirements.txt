@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+uvicorn[standard]
+streamlit
+requests
+pydantic
+langchain-community
+langchain-cohere
+langchain-core
+langchain
+groq
+pypdf
+faiss-cpu # Or faiss-gpu if you intend to use a GPU instance, but CPU is standard/cheaper
+python-dotenv
+langchain-groq
+cohere # Ensure the base cohere library is installed
