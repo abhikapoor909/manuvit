@@ -4,7 +4,7 @@ import os
 import base64 # Import the base64 module
 
 # --- Configuration ---
-FASTAPI_URL = "https://manuvit.onrender.com"
+FASTAPI_URL = "https://manuvit.onrender.com/"
 ASSISTANT_NAME = "Manu"
 ASSISTANT_DEVELOPER = os.environ.get("ASSISTANT_DEVELOPER", "Xibotix Pvt Lim")
 
