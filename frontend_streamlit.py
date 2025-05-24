@@ -4,18 +4,15 @@ import os
 import base64 # Import the base64 module
 
 # --- Configuration ---
-FASTAPI_URL = os.environ.get("FASTAPI_URL", "http://localhost:8000")
+FASTAPI_URL = "https://manuvit.onrender.com"
 ASSISTANT_NAME = "Manu"
 ASSISTANT_DEVELOPER = os.environ.get("ASSISTANT_DEVELOPER", "Xibotix Pvt Lim")
 
 # --- Image Paths ---
-
-
 from pathlib import Path
-import os
 
 BASE_DIR = Path(__file__).resolve().parent
-PDF_PATH= BASE_DIR / "vitdata.pdf"
+PDF_PATH= BASE_DIR / "vitdata.pdf" # This doesn't seem used in the current UI code, but keep for completeness
 VIT_LOGO_PATH = BASE_DIR / "vit.png"  # Make sure this file exists in the same directory
 XIBOTIX_LOGO_PATH = BASE_DIR /"xibotix.png" # Make sure this file exists in the same directory
 
@@ -31,12 +28,12 @@ def img_to_base64(image_path):
             return base64.b64encode(f.read()).decode()
     except FileNotFoundError:
         st.error(f"Error: Image file not found at '{image_path}'.")
-        st.stop()
-        return None
+        st.stop() # Stop execution if essential images are missing
+        return None # Should not be reached due to st.stop()
     except Exception as e:
         st.error(f"Error encoding image '{image_path}': {e}")
-        st.stop()
-        return None
+        st.stop() # Stop execution on other encoding errors
+        return None # Should not be reached due to st.stop()
 
 
 # --- Streamlit App ---
@@ -48,17 +45,15 @@ st.set_page_config(
 )
 
 # --- Check and Encode Logos ---
+# img_to_base64 will stop the app if files are not found or encoding fails.
 vit_img_base64 = img_to_base64(VIT_LOGO_PATH)
 xibotix_img_base64 = img_to_base64(XIBOTIX_LOGO_PATH)
 
-# If either image failed to load/encode, img_to_base64 would stop the app.
-# If we reach here, both are available.
+# If we are here, both images were found and encoded successfully.
 
 # --- Header Layout (Columns for left logo, center title, right logo/text) ---
 # Adjust column ratios to control spacing and placement
-# [Left Column Width, Center Column Width, Right Column Width]
-# Experiment with these numbers (e.g., [2, 6, 3], [3, 5, 3])
-col_vit, col_title, col_xibotix = st.columns([2, 5, 3]) # Adjusted ratios slightly based on common layouts
+col_vit, col_title, col_xibotix = st.columns([2, 5, 3]) # Adjusted ratios
 
 with col_vit:
     # VIT Logo on the left, made clickable using HTML markdown
@@ -72,13 +67,11 @@ with col_vit:
 
 with col_title:
     # Main title in the central column
-    # Use CSS to ensure centering within the column
     st.markdown(f"<h1 style='text-align: center;'>{ASSISTANT_NAME}</h1>", unsafe_allow_html=True)
 
 
 with col_xibotix:
     # Xibotix logo and developer text in the top right column
-    # Use a div with right-alignment for both elements
     xibotix_html = f"""
     <div style='text-align: right;'>
         <a href="{XIBOTIX_URL}" target="_blank" style="display: inline-block; margin-top: 10px;">
@@ -93,7 +86,6 @@ with col_xibotix:
 st.divider()
 
 # --- Chat Interface ---
-# (This part remains largely the same as it's the core functionality)
 
 # Initialize chat history in session state
 if "messages" not in st.session_state:
@@ -108,7 +100,8 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # Accept user input
-if prompt := st.chat_input(f"Ask {ASSISTANT_NAME} about the document..."):
+# --- CHANGE 1: Modified the placeholder text ---
+if prompt := st.chat_input("Hii. I am Manu"):
     # Add user message to chat history immediately
     st.session_state.messages.append({"role": "user", "content": prompt})
     # Re-run the app to display the user message immediately
@@ -124,7 +117,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
     try:
         # Display a placeholder for the assistant's response while waiting
         with st.chat_message("assistant"):
-            with st.spinner(f"Asking {ASSISTANT_NAME}..."):
+            # --- CHANGE 2: Removed text from the spinner ---
+            with st.spinner(""):
                  response = requests.post(
                     f"{FASTAPI_URL}/chat",
                     json={"query": user_query}
@@ -144,7 +138,8 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.error(error_message) # Display prominent error box outside chat
         # Add a simplified error message to chat history
         st.session_state.messages.append({"role": "assistant", "content": "Error: Could not connect to the server. Please ensure the backend is running."})
-        st.rerun() # Re-run to show the error in chat history
+        # No rerun needed here, as the error message is already displayed and added to session state
+        # and the stream will continue below, potentially prompting for input again.
 
 
     except requests.exceptions.RequestException as e:
@@ -152,14 +147,14 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         st.error(error_message) # Display prominent error box outside chat
         # Add a simplified error to chat history
         st.session_state.messages.append({"role": "assistant", "content": f"Error processing request on server: {e}"})
-        st.rerun() # Re-run to show the error in chat history
+        # No rerun needed
 
     except Exception as e:
         error_message = f"An unexpected error occurred: {e}"
         st.error(error_message) # Display prominent error box outside chat
         # Add a simplified error to chat history
         st.session_state.messages.append({"role": "assistant", "content": f"An unexpected error occurred: {e}"})
-        st.rerun() # Re-run to show the error in chat history
+        # No rerun needed
 
 
 # Optional: Info message about the backend
